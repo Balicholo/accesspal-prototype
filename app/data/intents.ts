@@ -3,7 +3,7 @@ export const intents = [
     command: 'greeting',
     keywords: {
       en: ['hello', 'hi', 'hey', 'greetings', 'good morning', 'good afternoon', 'good evening'],
-      sn: ['mhoro', 'maswera sei', 'makadii', 'kwaziwai', 'manheru', 'mangwanani']
+      sn: ['mhoro', 'maswera sei', 'makadii', 'masikati', 'kwaziwai', 'manheru', 'mangwanani']
     },
     response: {
       en: "Hello! I'm Access Pal, your bilingual assistant. How can I help you today?",

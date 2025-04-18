@@ -43,7 +43,7 @@ export function handleIntent(text: string, language: Language): {
   return {
     response: language === 'en' 
       ? "I'm sorry, I didn't understand that command. Try saying 'help' to see what I can do."
-      : "Ndinokumbira mureverezve. Reva 'batsira' kuti muone zvandingaite."
+      : "Ndinokumbira mutaure futi kana kuti, iti 'batsira' kuti muone zvandingaite."
   };
 }
 
