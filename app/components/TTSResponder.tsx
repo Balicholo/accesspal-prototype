@@ -9,6 +9,9 @@ export function speak(text: string, language: Language) {
       return;
     }
 
+    // Cancel any ongoing speech
+    window.speechSynthesis.cancel();
+
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = language === 'sn' ? 'sn-ZW' : 'en-US';
     utterance.onend = () => resolve();

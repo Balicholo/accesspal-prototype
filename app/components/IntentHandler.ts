@@ -35,7 +35,7 @@ export function handleIntent(text: string, language: Language): {
       }
       
       return {
-        response: typeof response === 'function' ? response() : response
+        response: typeof response === 'function' ? response(language) : response
       };
     }
   }
@@ -49,7 +49,7 @@ export function handleIntent(text: string, language: Language): {
 
 export function detectLanguage(text: string): Language {
   const shonaWords = [
-    'mhoro', 'makadii', 'maswera', 'ndatenda', 'tarirai',
+    'mhoro', 'makadii', 'maswera', 'ndatenda', 'tarisa',
     'vhura', 'tenga', 'mari', 'nguva', 'batidza', 'fona',
     'tumira', 'batsira', 'ndinoda', 'kuna', 'zvakadii'
   ];
