@@ -47,7 +47,7 @@ export const intents = [
     command: 'send_money',
     keywords: {
       en: ['send money', 'transfer', 'ecocash', 'innbucks', 'transaction', 'money transfer', 'make a transaction'],
-      sn: ['tumira mari', 'tumira', 'ecocash', 'innbucks', 'senda', 'transfeya', 'transfare', 'svitsa', 'kuti utumire mari', 'kuti utumire', 'kuti utumire mari', 'kuti utumire mari kumunhu', 'kuti utumire mari kumunhu uyu']
+      sn: ['tumira mari', 'tumira', 'ecocash', 'innbucks', 'senda', 'transfeya', 'transfare', 'svitsa', 'kuti utumire mari', 'kuti utumire', 'kuti utumire mari', 'kuti utumire mari kuna']
     },
     response: {
       en: 'Please specify the amount and recipient for the transfer. By saying "the amount is and the recipient is."',
