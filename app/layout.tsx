@@ -9,8 +9,9 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'Access Pal',
-  description: 'Empowering the visually impaired and the tech illitarate navigate the digital world through accessible technology.',
+  title: 'AccessPal',
+  description:
+    'A voice-first AI assistant that helps people use a smartphone through natural conversation, African languages, and local services.',
 };
 
 export default function RootLayout({
@@ -20,7 +21,12 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={inter.className}>{children}</body>
+      <head>
+        <meta httpEquiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+        <meta httpEquiv="Pragma" content="no-cache" />
+        <meta httpEquiv="Expires" content="0" />
+      </head>
+      <body className={`${inter.className} antialiased`}>{children}</body>
     </html>
   );
 }
