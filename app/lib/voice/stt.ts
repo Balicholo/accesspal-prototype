@@ -1,5 +1,6 @@
 import { logTransition } from '../controller/logger';
 import { VOICE_CONFIG } from '../assistant/config';
+import { isMobileVoiceClient } from '../speech/tts';
 import { inspectWake } from './wakeWord';
 import type { LanguageCode } from '../types';
 
@@ -15,6 +16,8 @@ export interface SpeechProvider {
   readonly name: string;
   start(mode: Exclude<VoiceMode, 'off'>, language?: LanguageCode, options?: { silenceMs?: number }): boolean;
   restartFresh?(mode: Exclude<VoiceMode, 'off'>, language?: LanguageCode, options?: { silenceMs?: number }): boolean;
+  holdSession(): void;
+  resumeSession(mode: Exclude<VoiceMode, 'off'>, language?: LanguageCode, options?: { silenceMs?: number }): boolean;
   mute(): void;
   unmute(): void;
   pause(): void;
@@ -113,9 +116,7 @@ export class BrowserSpeechProvider implements SpeechProvider {
 
     if (this.recognition && this.starting) return true;
     if (this.recognition && !this.stopping) {
-      if (mode === 'command') this.armSilence(this.commandSilence);
-      this.handlers.onStart?.(mode);
-      return true;
+      return this.resumeSession(mode, language, options);
     }
 
     return this.begin();
@@ -145,7 +146,44 @@ export class BrowserSpeechProvider implements SpeechProvider {
 
   unmute() {
     this.muted = false;
+    this.lastFinal = '';
+    this.utterance = '';
+    this.pendingPreview = '';
     if (this.mode === 'command') this.armSilence(this.commandSilence);
+  }
+
+  holdSession() {
+    this.muted = true;
+    this.clearSilence();
+    this.clearEndSpeech();
+    this.utterance = '';
+    this.pendingPreview = '';
+  }
+
+  resumeSession(
+    mode: Exclude<VoiceMode, 'off'>,
+    language: LanguageCode = this.language,
+    options?: { silenceMs?: number }
+  ) {
+    this.language = language;
+    this.commandSilence =
+      options?.silenceMs ?? (mode === 'command' ? VOICE_CONFIG.noCommandMs : 20000);
+    this.mode = mode;
+    this.shouldRestart = true;
+    this.muted = false;
+    this.lastFinal = '';
+    this.utterance = '';
+    this.pendingPreview = '';
+    this.clearEndSpeech();
+
+    if (this.recognition && !this.stopping && !this.starting) {
+      if (mode === 'command') this.armSilence(this.commandSilence);
+      this.handlers.onStart?.(mode);
+      logTransition('VOICE', `resumed (${mode})`);
+      return true;
+    }
+
+    return this.begin();
   }
 
   pause() {
@@ -232,7 +270,12 @@ export class BrowserSpeechProvider implements SpeechProvider {
       }
 
       this.armSilence(this.commandSilence);
-      this.armEndSpeech(VOICE_CONFIG.endOfSpeechMs, confidence);
+      this.armEndSpeech(
+        /Android|iPhone|iPad|iPod/i.test(navigator.userAgent)
+          ? Math.min(VOICE_CONFIG.endOfSpeechMs, 900)
+          : VOICE_CONFIG.endOfSpeechMs,
+        confidence
+      );
     };
 
     recognition.onerror = (event: { error?: string }) => {
@@ -298,21 +341,26 @@ export class BrowserSpeechProvider implements SpeechProvider {
     this.lastFinal = cleaned;
     this.lastFinalAt = now;
     this.utterance = '';
+    this.pendingPreview = '';
     this.clearSilence();
     this.clearEndSpeech();
     this.muted = true;
-    this.shouldRestart = false;
+    if (isMobileVoiceClient()) {
+      this.shouldRestart = true;
+    } else {
+      this.shouldRestart = false;
+      try {
+        this.recognition?.stop();
+      } catch {
+        // ignore
+      }
+    }
     logTransition('VOICE', `final transcript received: "${cleaned}"`);
     this.handlers.onFinal({
       transcript: cleaned,
       final: true,
       confidence: confidence > 0 ? confidence : 0.85,
     });
-    try {
-      this.recognition?.stop();
-    } catch {
-      // ignore
-    }
   }
 
   private armEndSpeech(ms: number, confidence: number) {

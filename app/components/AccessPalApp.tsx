@@ -273,15 +273,22 @@ function PitchExperience() {
               <DebugPanel state={phone.state} />
             </section>
 
-            <section className="relative h-full w-1/2 overflow-hidden bg-[#0d151c]">
-              <PhoneFrame {...phoneProps} variant="immersive" />
-              <button
-                type="button"
-                onClick={goToHub}
-                className="absolute left-3 top-[max(2.75rem,calc(env(safe-area-inset-top)+2.1rem))] z-50 rounded-full bg-black/45 px-3 py-1.5 text-xs text-white/90 ring-1 ring-white/15 backdrop-blur-md"
-              >
-                ← {t('demo.commands')}
-              </button>
+            <section className="flex h-full w-1/2 flex-col overflow-hidden bg-[#07090d]">
+              <div className="z-50 flex shrink-0 items-center justify-between gap-2 border-b border-white/10 bg-[#07090d] px-3 pb-2 pt-[max(0.5rem,env(safe-area-inset-top))]">
+                <button
+                  type="button"
+                  onClick={goToHub}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white/90 ring-1 ring-white/10"
+                >
+                  ← {t('demo.commands')}
+                </button>
+                <span className="text-[10px] uppercase tracking-[0.18em] text-[#e4b56a]/80">
+                  AccessPal
+                </span>
+              </div>
+              <div className="min-h-0 flex-1">
+                <PhoneFrame {...phoneProps} variant="immersive" />
+              </div>
             </section>
           </div>
         </div>

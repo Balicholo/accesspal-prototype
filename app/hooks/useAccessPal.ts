@@ -88,13 +88,23 @@ export function useAccessPal() {
     patchSession({ isListening: false });
   }, [patchSession]);
 
+  const pauseMic = useCallback(() => {
+    if (isMobileVoiceClient()) {
+      listenerRef.current?.holdSession();
+    } else {
+      listenerRef.current?.stop();
+    }
+    patchSession({ isListening: false });
+  }, [patchSession]);
+
   const startMic = useCallback(
     (mode: 'wake' | 'command', silenceMs?: number) => {
       const listener = listenerRef.current;
       if (!listener || !handsFreeRef.current || demoRef.current) return;
-      const started = listener.start(mode, engineRef.current.getContext().language, {
-        silenceMs,
-      });
+      const language = engineRef.current.getContext().language;
+      const started = isMobileVoiceClient()
+        ? listener.resumeSession(mode, language, { silenceMs })
+        : listener.start(mode, language, { silenceMs });
       if (started) {
         patchSession({
           voiceState: mode === 'command' ? 'listening' : 'idle',
@@ -178,7 +188,7 @@ export function useAccessPal() {
       speakingRef.current = true;
       lastSpokenRef.current = line;
       lastSpokenAtRef.current = Date.now();
-      stopMic();
+      pauseMic();
       patchSession({
         voiceState: 'speaking',
         phase: compact ? 'executing' : 'speaking',
@@ -196,7 +206,7 @@ export function useAccessPal() {
       if (turnId !== turnIdRef.current) return;
       patchSession({ isSpeaking: false });
     },
-    [patchSession, stopMic]
+    [patchSession, pauseMic]
   );
 
   const runTurn = useCallback(
@@ -310,7 +320,17 @@ export function useAccessPal() {
           isListening: true,
         });
         const ack = engineRef.current.process(trimmed) as EngineTurnResult;
-        await speakLine(ack.reply, ack.language, turnIdRef.current);
+        if (isMobileVoiceClient()) {
+          patchSession({
+            reply: ack.reply,
+            phase: 'listening',
+            voiceState: 'waiting_for_follow_up',
+            isSpeaking: false,
+            isListening: true,
+          });
+        } else {
+          await speakLine(ack.reply, ack.language, turnIdRef.current);
+        }
         armFollowUp(VOICE_CONFIG.noCommandMs);
         return;
       }
@@ -321,7 +341,7 @@ export function useAccessPal() {
       turnIdRef.current += 1;
       const turnId = turnIdRef.current;
       clearSleep();
-      stopMic();
+      pauseMic();
       stopSpeaking();
       phone.dispatch({ type: 'CLEAR_ERROR' });
 
@@ -388,7 +408,7 @@ export function useAccessPal() {
         recover("I'm having trouble processing that. Please try again.");
       }
     },
-    [armFollowUp, clearSleep, enterIdle, patchSession, phone, recover, runTurn, speakLine, startMic, stopMic]
+    [armFollowUp, clearSleep, enterIdle, pauseMic, patchSession, phone, recover, runTurn, speakLine, startMic]
   );
 
   const ingestRef = useRef(ingest);

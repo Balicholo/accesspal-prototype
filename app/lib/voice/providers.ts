@@ -23,6 +23,10 @@ export class CloudSTTProvider implements SpeechProvider {
   pause() {}
   mute() {}
   unmute() {}
+  holdSession() {}
+  resumeSession() {
+    return false;
+  }
   stop() {}
   setLanguage(_language: LanguageCode) {}
   isActive() {
