@@ -55,7 +55,8 @@ const PHRASES: Array<[string, number]> = [
   ['makumi mashanu', 50],
   ['madhora makumi maviri', 20],
   ['madhora mashanu', 5],
-  ['one hundred', 100],
+  ['dola tano', 5],
+  ['dola 20', 20],
   ['a hundred', 100],
   ['two hundred', 200],
 ];
@@ -67,6 +68,9 @@ export function extractAmount(text: string): number | undefined {
     if (normalized.includes(phrase)) return value;
   }
 
+  const dolaFirst = normalized.match(/dola\s+(\d+(?:\.\d+)?)/);
+  if (dolaFirst) return Number(dolaFirst[1]);
+
   const currency = normalized.match(/\$\s*(\d+(?:\.\d+)?)/);
   if (currency) return Number(currency[1]);
 
@@ -74,7 +78,7 @@ export function extractAmount(text: string): number | undefined {
   if (written !== undefined) return written;
 
   const unit = normalized.match(
-    /(\d+(?:\.\d+)?)\s*(?:dollars?|usd|bucks|mari|madhora)/
+    /(\d+(?:\.\d+)?)\s*(?:dollars?|usd|bucks|mari|madhora|dola)/
   );
   if (unit) return Number(unit[1]);
 

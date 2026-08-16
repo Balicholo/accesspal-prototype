@@ -12,7 +12,7 @@ import { VOICE_CONFIG } from '../lib/assistant/config';
 import { logTransition } from '../lib/controller/logger';
 import { ActionEngine } from '../lib/engine/actionEngine';
 import { delay } from '../lib/services/wallet';
-import { speak, stopSpeaking } from '../lib/speech/tts';
+import { speak, stopSpeaking, isMobileVoiceClient } from '../lib/speech/tts';
 import {
   BrowserSpeechProvider,
   isSpeechRecognitionSupported,
@@ -43,6 +43,7 @@ export function useAccessPal() {
   const handsFreeRef = useRef(false);
   const demoRef = useRef(false);
   const lastSpokenRef = useRef('');
+  const lastSpokenAtRef = useRef(0);
   const lastWakeRef = useRef(0);
   const lastUtteranceRef = useRef('');
   const voiceRateRef = useRef(0.96);
@@ -176,27 +177,26 @@ export function useAccessPal() {
     ) => {
       speakingRef.current = true;
       lastSpokenRef.current = line;
-      listenerRef.current?.unmute();
+      lastSpokenAtRef.current = Date.now();
+      stopMic();
       patchSession({
         voiceState: 'speaking',
         phase: compact ? 'executing' : 'speaking',
         isSpeaking: true,
-        isListening: true,
+        isListening: false,
         reply: line,
       });
       await speak(line, language, {
         rate: voiceRateRef.current,
-        onStart: () => {
-          listenerRef.current?.start('command', engineRef.current.getContext().language, {
-            silenceMs: VOICE_CONFIG.noCommandMs,
-          });
-        },
       });
+      const tail = isMobileVoiceClient() ? 650 : 280;
+      await delay(tail);
+      lastSpokenAtRef.current = Date.now();
       speakingRef.current = false;
       if (turnId !== turnIdRef.current) return;
       patchSession({ isSpeaking: false });
     },
-    [patchSession]
+    [patchSession, stopMic]
   );
 
   const runTurn = useCallback(
@@ -260,7 +260,7 @@ export function useAccessPal() {
       }
 
       if (options.source === 'voice') {
-        if (isSelfEcho(trimmed, lastSpokenRef.current)) {
+        if (isSelfEcho(trimmed, lastSpokenRef.current, lastSpokenAtRef.current)) {
           return;
         }
         if (speakingRef.current) {
@@ -417,8 +417,8 @@ export function useAccessPal() {
       },
       onFinal: (result) => {
         if (!result.transcript.trim()) return;
-        if (processingRef.current) return;
-        if (isSelfEcho(result.transcript, lastSpokenRef.current)) return;
+        if (processingRef.current || speakingRef.current) return;
+        if (isSelfEcho(result.transcript, lastSpokenRef.current, lastSpokenAtRef.current)) return;
         const needsWake =
           listenerRef.current?.getMode() === 'wake' && !followUpRef.current && !speakingRef.current;
         void ingestRef.current(result.transcript, {
@@ -448,6 +448,7 @@ export function useAccessPal() {
         if (processingRef.current || speakingRef.current) return;
         if (followUpRef.current) {
           followUpRef.current = false;
+          listenerRef.current?.stop();
           void speak("Sorry, I didn't catch that.", engineRef.current.getContext().language).then(
             () => enterIdleRef.current()
           );
@@ -634,7 +635,7 @@ function shouldSkipFiller(text: string, task: EngineTurn['task']) {
   return act === 'confirm' || act === 'allow';
 }
 
-function isSelfEcho(transcript: string, lastSpoken: string) {
+function isSelfEcho(transcript: string, lastSpoken: string, spokenAt = 0) {
   const heard = normalizeText(transcript);
   if (!heard) return true;
   if (
@@ -648,9 +649,30 @@ function isSelfEcho(transcript: string, lastSpoken: string) {
   if (!spoken) return false;
   if (heard === spoken) return true;
   if (isConfirmMeaning(heard) || isCancelMeaning(heard)) return false;
-  if (spoken.includes(heard) && heard.length >= 6) return true;
-  if (heard.includes(spoken) && spoken.length >= 6) return true;
+
+  const overlap = tokenOverlap(heard, spoken);
+  if (overlap >= 0.45) return true;
+  if (spoken.includes(heard) && heard.length >= 8) return true;
+  if (heard.includes(spoken) && spoken.length >= 8) return true;
+
+  const recent = Date.now() - spokenAt < 1400;
+  if (recent) {
+    if (/\bbalance\b/.test(heard) && /\bbalance\b/.test(spoken)) return true;
+    if (/\becocash\b/.test(heard) && /\becocash\b/.test(spoken)) return true;
+    if (overlap >= 0.28) return true;
+  }
   return false;
+}
+
+function tokenOverlap(a: string, b: string) {
+  const left = new Set(a.split(' ').filter((token) => token.length > 2));
+  const right = b.split(' ').filter((token) => token.length > 2);
+  if (!left.size || !right.length) return 0;
+  let hits = 0;
+  for (const token of right) {
+    if (left.has(token)) hits += 1;
+  }
+  return hits / Math.min(left.size, right.length);
 }
 
 function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {

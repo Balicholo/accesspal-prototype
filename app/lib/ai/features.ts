@@ -85,7 +85,6 @@ const CANCEL = [
   'abort',
   'dont do it',
   "don't do it",
-  'wait',
   'rega',
   'regedza',
   'ghairi',
@@ -205,11 +204,15 @@ export function extractMessageBody(text: string): string | undefined {
     )
     .trim();
   const patterns = [
+    /change (?:the )?(?:message|text) to (.+)/i,
+    /make (?:the message|it) (.+)/i,
     /let [A-Za-z']+ know(?: that)?\s+(.+)/i,
     /saying\s+["“]?(.+?)["”]?$/i,
     /tell (?:him|her|them|[A-Za-z']+)\s+(?:that\s+)?(.+)/i,
+    /(?:muudze|mtshele|mwambie)\s+(?:kuti\s+)?(.+)/i,
     /say (?:to (?:him|her|them|[A-Za-z]+)\s+)?["“]?(.+?)["”]?$/i,
     /(?:message|text|sms)(?:\s+to)?\s+(?:him|her|them|[A-Za-z]+)\s+(?:and\s+)?(?:tell him\s+|say(?:ing)?\s+)(.+)/i,
+    /(?:text|message|sms)\s+(?:to\s+)?[A-Za-z']+\s+(.+)/i,
     /and tell (?:him|her|them)\s+(.+)/i,
     /change (?:the )?(?:message|text) to (.+)/i,
     /make (?:the message|it) (.+)/i,
@@ -279,21 +282,31 @@ function isTime(text: string) {
 
 function isBalance(text: string) {
   return (
-    text.includes('balance') ||
+    /\b(my balance|check (my )?balance|what(?:s| is) my balance)\b/.test(text) ||
     text.includes('how much money') ||
     text.includes('how much do i have') ||
     text.includes('mari yasara') ||
     text.includes('mari yangu') ||
-    text.includes('what is my balance') ||
     text.includes('ibhalansi') ||
     text.includes('salio')
   );
 }
 
 function isHelp(text: string) {
+  if (
+    text.includes('send') ||
+    text.includes('message') ||
+    text.includes('call') ||
+    text.includes('airtime') ||
+    text.includes('ecocash')
+  ) {
+    return false;
+  }
   return (
     text.includes('what can you do') ||
     text.includes('how can you help') ||
+    text.includes('can you help') ||
+    text.includes('help me') ||
     text.includes('unogona chii') ||
     text.includes('yini ongayisiza') ||
     text.includes('unaweza kufanya nini') ||
@@ -315,7 +328,7 @@ function isOpen(text: string) {
 }
 
 function isMessage(text: string) {
-  if (isOpen(text)) return false;
+  if (isOpen(text) || isBiggerText(text) || isSlowerVoice(text)) return false;
   if (/\btell me\b/.test(text) || text.includes('tell me about')) return false;
   return (
     text.includes('message') ||
@@ -326,6 +339,10 @@ function isMessage(text: string) {
     (/\btell\s+[a-z']+\b/.test(text) && !/\btell me\b/.test(text)) ||
     /\blet\s+[a-z']+\s+know\b/.test(text) ||
     text.includes('meseji') ||
+    text.includes('tumira meseji') ||
+    text.includes('muudze') ||
+    text.includes('mtshele') ||
+    text.includes('mwambie') ||
     text.includes('umlayezo') ||
     text.includes('ujumbe') ||
     text.includes('kutumira message')
@@ -333,7 +350,14 @@ function isMessage(text: string) {
 }
 
 function isMoney(text: string) {
+  if (isAirtime(text)) return false;
   if (isMessage(text) && !/(mari|money|dollar|ecocash|kutumira|transfer)/.test(text)) {
+    return false;
+  }
+  if (
+    /(madhora|amadola|dola)\b/.test(text) &&
+    !/(tumira|thumela|kutuma|send|transfer|ecocash|kutumira)/.test(text)
+  ) {
     return false;
   }
   return (
@@ -345,6 +369,7 @@ function isMoney(text: string) {
     text.includes('ndoda kutumira') ||
     text.includes('ndinoda kutumira') ||
     text.includes('tumira') ||
+    text.includes('kutuma') ||
     text.includes('madhora') ||
     text.includes('ecocash') ||
     text.includes('innbucks') ||
@@ -374,11 +399,15 @@ function isCall(text: string) {
   if (
     text.includes('tell him') ||
     text.includes('tell her') ||
+    text.includes('muudze') ||
+    text.includes('mtshele') ||
+    text.includes('mwambie') ||
     text.includes('message') ||
+    text.includes('meseji') ||
     text.includes('i ll call') ||
     text.includes('ill call')
   ) {
-    return /\b(call|fonera|kufona|piga simu)\b/.test(text) && !text.includes('tell');
+    return false;
   }
   return (
     /\bcall\b/.test(text) ||
@@ -386,6 +415,7 @@ function isCall(text: string) {
     text.includes('fonera') ||
     text.includes('kufona') ||
     text.includes('piga simu') ||
+    text.includes('mpigie') ||
     text.includes('shaya ucingo')
   );
 }

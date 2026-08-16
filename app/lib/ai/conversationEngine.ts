@@ -79,6 +79,13 @@ export class ConversationEngine {
         return this.weatherTurn(command);
       }
       if (features.wantsCalendar) return this.calendarTurn(command);
+    } else {
+      const blocked = unsupportedCapability(command);
+      if (blocked) return this.say(blocked, { expectFollowUp: true });
+      if (features.wantsWeather || features.wantsCalendar) {
+        const spoken = generalConversation.reply(command, this.context.language);
+        return this.say(spoken, { expectFollowUp: true });
+      }
     }
 
     if (
@@ -141,19 +148,23 @@ export class ConversationEngine {
 
   private startTask(features: UtteranceFeatures, person?: Contact): EngineTurn {
     if (features.wantsHome) {
+      this.context.task = null;
       return this.turn({ type: 'go_home' }, { actions: [{ type: 'GO_HOME' }] });
     }
 
     if (features.wantsEndCall) {
+      this.context.task = null;
       return this.turn({ type: 'call_ended', name: 'the contact' }, { actions: [{ type: 'END_CALL' }] });
     }
 
     if (features.wantsHelp) {
+      this.context.task = null;
       const spoken = generalConversation.reply(features.raw, this.context.language);
       return this.say(spoken, { expectFollowUp: true });
     }
 
     if (features.wantsBiggerText) {
+      this.context.task = null;
       return this.turn(
         { type: 'text_larger' },
         {
@@ -166,6 +177,7 @@ export class ConversationEngine {
     }
 
     if (features.wantsSlowerVoice) {
+      this.context.task = null;
       return this.turn(
         { type: 'voice_slower' },
         {
@@ -178,6 +190,7 @@ export class ConversationEngine {
     }
 
     if (features.wantsTime) {
+      this.context.task = null;
       return this.turn(
         { type: 'time', time: getCurrentTime() },
         { actions: [{ type: 'OPEN_APP', app: 'clock' }] }
@@ -185,6 +198,7 @@ export class ConversationEngine {
     }
 
     if (features.wantsBalance) {
+      this.context.task = null;
       return this.turn(
         { type: 'balance', balance: getBalance() },
         { actions: [{ type: 'OPEN_APP', app: 'ecocash' }, { type: 'SYNC_WALLET' }] }
@@ -216,6 +230,9 @@ export class ConversationEngine {
     }
 
     if (features.app && (features.wantsOpen || features.app)) {
+      if (this.context.task && this.context.task.app !== features.app) {
+        this.context.task = null;
+      }
       const name = APP_DISPLAY_NAMES[features.app];
       return this.turn(
         { type: 'opening_app', name },
@@ -321,8 +338,32 @@ export class ConversationEngine {
 
   private advanceMessage(features: UtteranceFeatures): EngineTurn {
     const task = this.context.task!;
+    const hadContact = Boolean(task.contact);
     const meaning = interpretTaskAct(features.raw);
     const yes = isAffirmativeUtterance(features.raw, features.act);
+
+    if (
+      !task.message &&
+      meaning === 'inform' &&
+      isLikelyNameOnly(features.raw) &&
+      !features.message
+    ) {
+      const named = this.resolvePerson(features);
+      if (named) {
+        task.contact = named;
+        this.context.task = { ...task, step: 'collect', status: 'COLLECTING_INFORMATION' };
+        return this.turn(
+          { type: 'ask_message', name: named.name },
+          {
+            actions: [
+              { type: 'OPEN_APP', app: 'whatsapp' },
+              { type: 'OPEN_CHAT', contactId: named.id, channel: 'whatsapp' },
+            ],
+            expectFollowUp: true,
+          }
+        );
+      }
+    }
 
     if (!task.contact) {
       if (features.contactOptions?.length) {
@@ -352,13 +393,37 @@ export class ConversationEngine {
       }
     }
 
-    if (features.message && meaning !== 'confirm') {
+    if (
+      task.step === 'confirm' &&
+      meaning === 'inform' &&
+      /[?]/.test(features.raw) &&
+      !features.message &&
+      !features.isCorrection
+    ) {
+      this.context.task = { ...task, step: 'confirm', status: 'READY_FOR_CONFIRMATION' };
+      return this.turn(
+        { type: 'confirm_message', name: task.contact!.name, message: task.message! },
+        { expectFollowUp: true }
+      );
+    }
+
+    if (
+      meaning === 'inform' &&
+      looksLikeMessage(features.raw) &&
+      !yes &&
+      !isLikelyNameOnly(features.raw)
+    ) {
+      const body =
+        features.message ||
+        stripWakeWord(features.raw).replace(/[.?]+$/, '').trim();
+      if (body) task.message = body;
+    } else if (features.message && meaning !== 'confirm') {
       task.message = features.message;
     } else if (
       !task.message &&
       meaning === 'inform' &&
-      !isLikelyNameOnly(features.raw) &&
-      looksLikeMessage(features.raw)
+      looksLikeMessage(features.raw) &&
+      (hadContact || !isLikelyNameOnly(features.raw))
     ) {
       task.message = stripWakeWord(features.raw).replace(/[.?]+$/, '').trim();
     }
@@ -702,7 +767,7 @@ export class ConversationEngine {
       day: tomorrow ? 'tomorrow' : 'today',
     });
     return {
-      ...this.say('', { actions: [] }),
+      ...this.say('Let me check the weather for you.', { actions: [] }),
       intent: 'weather',
       asyncReply: () => fetchWeather(place, tomorrow),
     };
@@ -807,7 +872,7 @@ export class ConversationEngine {
         language: this.context.language,
         languageChanged: Boolean(this.context.languageBanner),
         languageBanner: this.context.languageBanner,
-        expectFollowUp: true,
+        expectFollowUp: false,
         actions,
         task: null,
         followUpReply: speakAct(

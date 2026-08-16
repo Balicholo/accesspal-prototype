@@ -55,6 +55,7 @@ export function isLikelyNameOnly(raw: string) {
   if (/(good morning|good afternoon|good night|running late|i will|i'll|tell him|message)/.test(text)) {
     return false;
   }
+  if (/^(hello|hi|hey|thanks|thank you|please|ok|okay)$/.test(text)) return false;
   const tokens = text.split(' ').filter(Boolean);
   return tokens.length > 0 && tokens.length <= 3;
 }

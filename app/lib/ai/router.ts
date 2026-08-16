@@ -27,7 +27,22 @@ export function routeMeaning(
     if (features.act === 'confirm' || features.act === 'allow' || features.act === 'correct') {
       return 'continue_task';
     }
+    if (features.wantsWeather || features.wantsCalendar) {
+      return 'aside';
+    }
+    if (isSlotAnswer(currentTask, features) && incoming !== currentTask) {
+      return 'continue_task';
+    }
     if (incoming && incoming !== currentTask && features.isDeviceRequest) {
+      return 'device';
+    }
+    if (
+      (features.wantsAlarm ||
+        features.wantsBiggerText ||
+        features.wantsSlowerVoice ||
+        features.wantsHelp) &&
+      !isSlotAnswer(currentTask, features)
+    ) {
       return 'device';
     }
     if (
@@ -57,6 +72,19 @@ export function incomingTaskType(features: UtteranceFeatures): TaskType | null {
   if (features.wantsTime) return 'check_time';
   if (features.wantsBalance) return 'check_balance';
   if (features.wantsHome) return 'open_app';
+  if (features.wantsAlarm || features.wantsBiggerText || features.wantsSlowerVoice) {
+    return 'open_app';
+  }
   if (features.wantsOpen && features.app) return 'open_app';
   return null;
+}
+
+function isSlotAnswer(task: TaskType, features: UtteranceFeatures) {
+  if (task === 'buy_airtime' && features.amount !== undefined && !features.wantsCall && !features.wantsMessage) {
+    return !features.wantsOpen && !features.wantsHome;
+  }
+  if (task === 'send_money' && features.amount !== undefined && !features.wantsAirtime && !features.wantsCall) {
+    return !features.wantsMessage && !features.wantsOpen && !features.wantsHome;
+  }
+  return false;
 }

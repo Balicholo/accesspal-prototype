@@ -81,6 +81,7 @@ const NAME_STOP = new Set([
 export function extractMentionedPerson(text: string): string | undefined {
   const raw = text.trim();
   const normalized = normalizeText(raw);
+  if (/change (?:the )?(?:message|text) to/.test(normalized)) return undefined;
   if (/^(good morning|good afternoon|good night|good evening)\b/.test(normalized) && !/\b(to|kuna)\b/.test(normalized)) {
     return undefined;
   }
@@ -99,7 +100,7 @@ export function extractMentionedPerson(text: string): string | undefined {
   const patterns = [
     /\b(?:to|kuna|ku|kwa|for)\s+(?:my\s+)?([A-Za-z][A-Za-z'-]+(?:\s+[A-Za-z][A-Za-z'-]+)?)/i,
     /\bsend\s+([A-Za-z][A-Za-z'-]+)\s+(?:a\s+message|twenty|thirty|forty|fifty|ten|five|\d+)/i,
-    /\b(?:call|message|text|fonera)\s+(?:my\s+)?([A-Za-z][A-Za-z'-]+)/i,
+    /\b(?:call|message|text|fonera|mpigie)\s+(?:my\s+)?([A-Za-z][A-Za-z'-]+(?:\s+[A-Za-z][A-Za-z'-]+)?)/i,
   ];
 
   for (const pattern of patterns) {

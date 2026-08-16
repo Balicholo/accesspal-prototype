@@ -5,6 +5,11 @@ import type { LanguageCode } from '../types';
 let speakGeneration = 0;
 let resumeTimer: number | null = null;
 
+export function isMobileVoiceClient() {
+  if (typeof navigator === 'undefined') return false;
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
 export async function clearVoiceRuntime() {
   stopSpeaking();
 }
@@ -23,10 +28,7 @@ export function speak(
 
     const generation = ++speakGeneration;
     const synth = window.speechSynthesis;
-    if (synth.speaking || synth.pending) {
-      synth.cancel();
-    }
-
+    const mobile = isMobileVoiceClient();
     const utterance = new SpeechSynthesisUtterance(text);
     const config = getLanguage(language);
     const requested = config.speechSynthesisCode ?? 'en-US';
@@ -34,27 +36,30 @@ export function speak(
 
     utterance.lang = voice?.lang ?? fallbackLang(requested);
     if (voice) utterance.voice = voice;
-    utterance.rate = hooks.rate ?? 0.96;
+    utterance.rate = hooks.rate ?? (mobile ? 0.92 : 0.96);
     utterance.pitch = 1;
     utterance.volume = 1;
 
     let settled = false;
-    const estimatedMs = Math.min(20000, Math.max(2500, 600 + text.length * 70));
+    let started = false;
+    const estimatedMs = Math.min(22000, Math.max(2800, 700 + text.length * 75));
 
     const finish = (reason: string) => {
       if (settled) return;
       settled = true;
       window.clearTimeout(watchdog);
+      window.clearTimeout(startGuard);
       stopResumePulse();
       logTransition('TTS', `ended (${reason})`);
       hooks.onEnd?.();
       resolve();
     };
 
-    const watchdog = window.setTimeout(() => finish('watchdog'), estimatedMs + 4000);
+    const watchdog = window.setTimeout(() => finish('watchdog'), estimatedMs + (mobile ? 6000 : 4000));
 
     utterance.onstart = () => {
       if (generation !== speakGeneration) return;
+      started = true;
       logTransition('TTS', 'started');
       startResumePulse();
       hooks.onStart?.();
@@ -63,13 +68,7 @@ export function speak(
     utterance.onerror = (event) => {
       const error = event.error ?? 'unknown';
       logTransition('TTS', `error ${error}`);
-      if (error === 'interrupted' || error === 'canceled') {
-        if (generation !== speakGeneration) {
-          finish(error);
-          return;
-        }
-      }
-      finish('error');
+      finish(error === 'interrupted' || error === 'canceled' ? error : 'error');
     };
 
     const begin = () => {
@@ -84,13 +83,36 @@ export function speak(
       }
     };
 
-    const voicesReady = synth.getVoices().length > 0;
-    const delayMs = synth.speaking || synth.pending ? 120 : 60;
-    if (!voicesReady) {
-      synth.addEventListener('voiceschanged', begin, { once: true });
-      window.setTimeout(begin, 200);
+    const startGuard = window.setTimeout(() => {
+      if (settled || started || generation !== speakGeneration) return;
+      logTransition('TTS', 'onstart missing, retrying');
+      try {
+        synth.resume();
+        if (!synth.speaking && !synth.pending) {
+          synth.speak(utterance);
+        }
+      } catch {
+        finish('retry-failed');
+      }
+    }, mobile ? 900 : 700);
+
+    let kicked = false;
+    const kickOff = () => {
+      if (kicked || settled || generation !== speakGeneration) return;
+      kicked = true;
+      startResumePulse();
+      begin();
+    };
+
+    const afterCancel = mobile ? 320 : 140;
+    if (synth.speaking || synth.pending) {
+      synth.cancel();
+      window.setTimeout(kickOff, afterCancel);
+    } else if (synth.getVoices().length === 0) {
+      synth.addEventListener('voiceschanged', kickOff, { once: true });
+      window.setTimeout(kickOff, 280);
     } else {
-      window.setTimeout(begin, delayMs);
+      window.setTimeout(kickOff, mobile ? 80 : 40);
     }
   });
 }
@@ -112,7 +134,7 @@ function startResumePulse() {
     } catch {
       // ignore
     }
-  }, 250);
+  }, 200);
 }
 
 function stopResumePulse() {
@@ -137,9 +159,13 @@ function pickVoice(lang: string): SpeechSynthesisVoice | undefined {
 
   const prefix = lang.slice(0, 2).toLowerCase();
   if (prefix === 'sn' || prefix === 'nd') {
-    return voices.find((voice) => voice.lang.toLowerCase().startsWith('en'));
+    return (
+      voices.find((voice) => /en-GB|en-ZA|en-US/i.test(voice.lang) && /google|samsung|android/i.test(voice.name)) ??
+      voices.find((voice) => voice.lang.toLowerCase().startsWith('en'))
+    );
   }
   return (
+    voices.find((voice) => voice.lang.toLowerCase().startsWith(prefix) && /google|samsung|android/i.test(voice.name)) ??
     voices.find((voice) => voice.lang.toLowerCase().startsWith(prefix)) ??
     voices.find((voice) => voice.lang.toLowerCase().startsWith('en'))
   );

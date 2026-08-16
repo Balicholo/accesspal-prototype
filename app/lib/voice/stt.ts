@@ -250,7 +250,11 @@ export class BrowserSpeechProvider implements SpeechProvider {
       }
       if (error === 'aborted' || error === 'no-speech') return;
       if (error === 'network') {
-        this.handlers.onError?.("I'm having trouble hearing you. Please try again, or type your request.");
+        logTransition('VOICE', 'network hiccup, restarting recognizer');
+        this.recognition = null;
+        this.starting = false;
+        window.setTimeout(() => this.ensureRunning(), 400);
+        return;
       }
     };
 
@@ -284,7 +288,7 @@ export class BrowserSpeechProvider implements SpeechProvider {
     const now = Date.now();
     if (
       this.lastFinal &&
-      now - this.lastFinalAt < 1400 &&
+      now - this.lastFinalAt < 1800 &&
       (cleaned === this.lastFinal ||
         cleaned.includes(this.lastFinal) ||
         this.lastFinal.includes(cleaned))
