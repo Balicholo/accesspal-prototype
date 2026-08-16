@@ -30,6 +30,8 @@ export const nd: MessageDict = {
   'demo.guided': 'I-Demo eqondisayo',
   'demo.guidedBlurb': 'Ienza konke ngokwayo — ayidingi i-microphone.',
   'demo.reset': 'Buyisela i-Demo',
+  'demo.commands': 'Imiyalo',
+  'demo.openPhone': 'Vula ifoni',
   'demo.openWhatsapp': 'Vula i-WhatsApp',
   'demo.messageJoe': 'Thumela umlayezo we-WhatsApp',
   'demo.time': 'Buza isikhathi',

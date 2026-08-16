@@ -30,6 +30,8 @@ export const sn: MessageDict = {
   'demo.guided': 'Demo inotungamira',
   'demo.guidedBlurb': 'Inoita zvese yega — hapana microphone inodiwa.',
   'demo.reset': 'Dzora Demo',
+  'demo.commands': 'Mirairo',
+  'demo.openPhone': 'Vhura nhare',
   'demo.openWhatsapp': 'Vhura WhatsApp',
   'demo.messageJoe': 'Tumira meseji yeWhatsApp',
   'demo.time': 'Bvunza nguva',

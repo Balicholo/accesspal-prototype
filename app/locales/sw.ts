@@ -30,6 +30,8 @@ export const sw: MessageDict = {
   'demo.guided': 'Demo inayoongoza',
   'demo.guidedBlurb': 'Inakamilisha mtiririko wote — haihitaji maikrofoni.',
   'demo.reset': 'Weka upya Demo',
+  'demo.commands': 'Amri',
+  'demo.openPhone': 'Fungua simu',
   'demo.openWhatsapp': 'Fungua WhatsApp',
   'demo.messageJoe': 'Tuma ujumbe wa WhatsApp',
   'demo.time': 'Uliza saa',

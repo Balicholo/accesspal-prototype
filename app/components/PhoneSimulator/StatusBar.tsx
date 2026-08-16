@@ -3,7 +3,13 @@
 import { useEffect, useState } from 'react';
 import { Signal, Wifi, BatteryFull } from 'lucide-react';
 
-export function StatusBar({ light = false }: { light?: boolean }) {
+export function StatusBar({
+  light = false,
+  immersive = false,
+}: {
+  light?: boolean;
+  immersive?: boolean;
+}) {
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -20,7 +26,9 @@ export function StatusBar({ light = false }: { light?: boolean }) {
 
   return (
     <div
-      className={`pointer-events-none absolute inset-x-0 top-0 z-30 flex h-11 items-end justify-between px-6 pb-1 text-[12px] font-semibold ${tone}`}
+      className={`pointer-events-none absolute inset-x-0 top-0 z-30 flex items-end justify-between px-6 pb-1 text-[12px] font-semibold ${
+        immersive ? 'h-12 pt-[env(safe-area-inset-top)]' : 'h-11'
+      } ${tone}`}
     >
       <span className="tabular-nums">{time}</span>
       <div className="flex items-center gap-1.5">

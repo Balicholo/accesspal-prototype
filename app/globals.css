@@ -88,17 +88,31 @@
 }
 
 @media (max-height: 900px) {
-  .phone-shell {
+  .phone-shell:not(.phone-shell-immersive) {
     transform: scale(0.82);
     margin-bottom: -80px;
   }
 }
 
-@media (max-width: 420px) {
-  .phone-shell {
-    transform: scale(0.78);
-    margin-bottom: -100px;
+@media (max-width: 1023px) {
+  .phone-shell:not(.phone-shell-immersive) {
+    transform: none;
+    margin-bottom: 0;
   }
+}
+
+.mobile-panes {
+  transform: translateX(0);
+  transition: transform 0.42s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.mobile-panes-device {
+  transform: translateX(-50%);
+}
+
+.phone-shell-immersive {
+  height: 100%;
+  width: 100%;
 }
 
 .ap-ring {

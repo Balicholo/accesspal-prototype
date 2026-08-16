@@ -30,6 +30,8 @@ export const en: MessageDict = {
   'demo.guided': 'Guided Demo',
   'demo.guidedBlurb': 'Runs the full flow automatically — no microphone needed.',
   'demo.reset': 'Reset Demo',
+  'demo.commands': 'Commands',
+  'demo.openPhone': 'Open phone',
   'demo.openWhatsapp': 'Open WhatsApp',
   'demo.messageJoe': 'Send a WhatsApp message',
   'demo.time': 'Tell the time',
