@@ -147,19 +147,31 @@ function PitchExperience() {
     </div>
   );
 
-  const micPrompt = !accessPal.handsFree && (
+  const micPrompt = (
     <div className="flex max-w-sm items-center gap-3 rounded-full bg-white/5 px-3 py-2 text-left text-xs text-white/70 ring-1 ring-white/10">
       <div className="min-w-0 flex-1">
         <p className="font-medium text-[#e4b56a]">{t('voice.title')}</p>
-        <p className="truncate">{t('voice.allowMic')}</p>
+        <p className="truncate">
+          {accessPal.handsFree ? t('voice.disableHint') : t('voice.allowMic')}
+        </p>
       </div>
-      <button
-        type="button"
-        onClick={() => void accessPal.enableHandsFree()}
-        className="shrink-0 rounded-full bg-[#e4b56a] px-3 py-1.5 text-xs font-medium text-[#1a140c]"
-      >
-        {t('voice.enable')}
-      </button>
+      {accessPal.handsFree ? (
+        <button
+          type="button"
+          onClick={accessPal.disableListening}
+          className="shrink-0 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white/85 ring-1 ring-white/15 hover:bg-white/20"
+        >
+          {t('voice.disable')}
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => void accessPal.enableHandsFree()}
+          className="shrink-0 rounded-full bg-[#e4b56a] px-3 py-1.5 text-xs font-medium text-[#1a140c]"
+        >
+          {t('voice.enable')}
+        </button>
+      )}
     </div>
   );
 

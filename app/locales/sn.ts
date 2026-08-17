@@ -12,6 +12,8 @@ export const sn: MessageDict = {
   'voice.title': 'Izwi reAccessPal',
   'voice.allowMic': 'Bvumidza microphone kuti utauge nenzwi.',
   'voice.enable': 'Tanga kunzwa',
+  'voice.disable': 'Rega kunzwa',
+  'voice.disableHint': 'Microphone yabvumidzwa. Idzime kana wapedza.',
   'voice.listening': 'AccessPal iri kunzwa',
   'voice.ready': 'Yakamira · taura zvakanaka',
   'voice.waitMic': 'Tirikutarira microphone',

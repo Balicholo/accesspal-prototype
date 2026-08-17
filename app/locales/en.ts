@@ -12,6 +12,8 @@ export const en: MessageDict = {
   'voice.title': 'AccessPal Voice',
   'voice.allowMic': 'Allow microphone access for hands-free interaction.',
   'voice.enable': 'Enable listening',
+  'voice.disable': 'Disable listening',
+  'voice.disableHint': 'Microphone is on. Turn it off when you are done.',
   'voice.listening': 'AccessPal listening',
   'voice.ready': 'Listening · speak naturally',
   'voice.waitMic': 'Waiting for microphone',

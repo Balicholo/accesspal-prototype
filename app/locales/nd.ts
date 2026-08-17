@@ -12,6 +12,8 @@ export const nd: MessageDict = {
   'voice.title': 'Izwi le-AccessPal',
   'voice.allowMic': 'Vumela i-microphone ukuze ukhulume ngezwi.',
   'voice.enable': 'Qala ukulalela',
+  'voice.disable': 'Misa ukulalela',
+  'voice.disableHint': 'I-microphone ivuliwe. Yivale uma usuqedile.',
   'voice.listening': 'I-AccessPal iyalalela',
   'voice.ready': 'Ilalele · khuluma ngokukhululekile',
   'voice.waitMic': 'Silinde i-microphone',

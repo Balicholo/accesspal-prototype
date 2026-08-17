@@ -45,6 +45,7 @@ export function useAccessPal() {
   const actionEngineRef = useRef(new ActionEngine(phone.dispatch));
   const listenerRef = useRef<BrowserSpeechProvider | null>(null);
   const realtimeRef = useRef<RealtimeVoiceClient | null>(null);
+  const realtimeConnectingRef = useRef<Promise<boolean> | null>(null);
   const voicePathRef = useRef<'realtime' | 'browser' | 'none'>('none');
   const languageRef = useRef(phone.state.language);
   const turnIdRef = useRef(0);
@@ -57,6 +58,7 @@ export function useAccessPal() {
   const lastSpokenAtRef = useRef(0);
   const lastWakeRef = useRef(0);
   const lastUtteranceRef = useRef('');
+  const listenGenerationRef = useRef(0);
   const voiceRateRef = useRef(0.96);
   const sleepTimerRef = useRef<number | null>(null);
   const [micReady, setMicReady] = useState(false);
@@ -726,15 +728,18 @@ export function useAccessPal() {
     };
   }, []);
 
-  const enableHandsFree = useCallback(async () => {
-    stopSpeaking();
-    processingRef.current = false;
-    speakingRef.current = false;
-    followUpRef.current = false;
-    lastSpokenRef.current = '';
-    cancelledRef.current = false;
+  const connectRealtimeSession = useCallback(async () => {
+    if (voicePathRef.current === 'realtime' && realtimeRef.current?.isConnected()) {
+      return true;
+    }
+    if (realtimeConnectingRef.current) return realtimeConnectingRef.current;
+    if (!isRealtimeSupported()) return false;
 
-    if (isRealtimeSupported()) {
+    const run = (async () => {
+      stopSpeaking();
+      processingRef.current = false;
+      speakingRef.current = false;
+      cancelledRef.current = false;
       patchSession({
         voiceState: 'connecting',
         phase: 'thinking',
@@ -803,10 +808,8 @@ export function useAccessPal() {
         await client.connect(languageRef.current);
         voicePathRef.current = 'realtime';
         setMicReady(true);
-        setHandsFree(true);
-        handsFreeRef.current = true;
         setMicError('');
-        playActivationChime();
+        if (!handsFreeRef.current) client.setMicEnabled(false);
         client.seedHistory(
           openAISession.getMessages().map((message) => ({
             role: message.role,
@@ -816,7 +819,7 @@ export function useAccessPal() {
         patchSession({
           voiceState: 'ready',
           phase: 'standby',
-          isListening: true,
+          isListening: handsFreeRef.current,
           isProcessing: false,
           debugEngine: 'realtime',
           debugRealtime: 'connected',
@@ -831,8 +834,54 @@ export function useAccessPal() {
           debugRealtime: 'fallback',
           debugLastEvent: error instanceof Error ? error.message : 'realtime failed',
         });
+        return false;
       }
+    })();
+
+    realtimeConnectingRef.current = run;
+    try {
+      return await run;
+    } finally {
+      if (realtimeConnectingRef.current === run) realtimeConnectingRef.current = null;
     }
+  }, [applyRealtimeUi, patchSession]);
+
+  const enableHandsFree = useCallback(async () => {
+    const generation = ++listenGenerationRef.current;
+    stopSpeaking();
+    processingRef.current = false;
+    speakingRef.current = false;
+    followUpRef.current = false;
+    lastSpokenRef.current = '';
+    cancelledRef.current = false;
+    handsFreeRef.current = true;
+
+    if (await connectRealtimeSession()) {
+      if (generation !== listenGenerationRef.current) {
+        if (!handsFreeRef.current) {
+          realtimeRef.current?.setMicEnabled(false);
+          realtimeRef.current?.disconnect();
+          realtimeRef.current = null;
+          voicePathRef.current = 'none';
+        }
+        return false;
+      }
+      realtimeRef.current?.setMicEnabled(true);
+      setHandsFree(true);
+      handsFreeRef.current = true;
+      playActivationChime();
+      patchSession({
+        voiceState: 'ready',
+        phase: 'standby',
+        isListening: true,
+        isProcessing: false,
+        debugEngine: 'realtime',
+        debugRealtime: 'connected',
+      });
+      return true;
+    }
+
+    if (generation !== listenGenerationRef.current) return false;
 
     const listener = ensureFallbackSttRef.current();
     if (!listener) return false;
@@ -843,6 +892,10 @@ export function useAccessPal() {
         'Microphone access is required for voice interaction. You can also type your request.';
       setFallbackOpen(true);
       setMicError(message);
+      return false;
+    }
+    if (generation !== listenGenerationRef.current) {
+      listener.stop();
       return false;
     }
     voicePathRef.current = 'browser';
@@ -868,7 +921,36 @@ export function useAccessPal() {
       return false;
     }
     return true;
-  }, [applyRealtimeUi, patchSession]);
+  }, [connectRealtimeSession, patchSession]);
+
+  const disableListening = useCallback(() => {
+    listenGenerationRef.current += 1;
+    handsFreeRef.current = false;
+    setHandsFree(false);
+    followUpRef.current = false;
+    cancelledRef.current = true;
+    turnIdRef.current += 1;
+    processingRef.current = false;
+    speakingRef.current = false;
+    stopSpeaking();
+    clearSleep();
+    listenerRef.current?.stop();
+    realtimeRef.current?.cancelResponse();
+    realtimeRef.current?.setMicEnabled(false);
+    realtimeRef.current?.disconnect();
+    realtimeRef.current = null;
+    voicePathRef.current = 'none';
+    patchSession({
+      voiceState: 'idle',
+      phase: 'dormant',
+      isListening: false,
+      isProcessing: false,
+      isSpeaking: false,
+      currentAction: '',
+      actionState: 'idle',
+      debugRealtime: 'off',
+    });
+  }, [clearSleep, patchSession]);
 
   useEffect(() => {
     languageRef.current = phone.state.language;
@@ -900,9 +982,14 @@ export function useAccessPal() {
 
   const submitText = useCallback(
     async (text: string) => {
+      const trimmed = text.trim();
+      if (!trimmed) return;
       followUpRef.current = true;
-      if (voicePathRef.current === 'realtime' && realtimeRef.current?.isConnected()) {
-        const spoken = detectSpokenLanguage(text, languageRef.current);
+      const live = await connectRealtimeSession();
+      const client = realtimeRef.current;
+      if (live && client?.isConnected()) {
+        if (!handsFreeRef.current) client.setMicEnabled(false);
+        const spoken = detectSpokenLanguage(trimmed, languageRef.current);
         if (spoken.switched) {
           languageRef.current = spoken.language;
           engineRef.current.setLanguage(spoken.language);
@@ -911,23 +998,23 @@ export function useAccessPal() {
             language: spoken.language,
             banner: spoken.label,
           });
-          realtimeRef.current.updateLanguage(spoken.language);
+          client.updateLanguage(spoken.language);
         }
-        lastUtteranceRef.current = text;
-        openAISession.recordUser(text);
+        lastUtteranceRef.current = trimmed;
+        openAISession.recordUser(trimmed);
         patchSession({
-          heard: text,
+          heard: trimmed,
           voiceState: 'processing',
           phase: 'thinking',
           isProcessing: true,
           debugEngine: 'realtime',
         });
-        realtimeRef.current.sendUserText(text);
+        client.sendUserText(trimmed);
         return;
       }
-      await ingest(text, { source: 'text', requireWake: false });
+      await ingest(trimmed, { source: 'text', requireWake: false });
     },
-    [ingest, patchSession, phone]
+    [connectRealtimeSession, ingest, patchSession, phone]
   );
 
   const retryLast = useCallback(async () => {
@@ -985,6 +1072,7 @@ export function useAccessPal() {
     micError,
     setFallbackOpen,
     enableHandsFree,
+    disableListening,
     submitText,
     retryLast,
     resetDevice,

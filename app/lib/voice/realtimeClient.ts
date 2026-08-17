@@ -148,7 +148,12 @@ export class RealtimeVoiceClient {
         content: [{ type: 'input_text', text }],
       },
     });
-    this.send({ type: 'response.create' });
+    this.send({
+      type: 'response.create',
+      response: {
+        output_modalities: ['audio'],
+      },
+    });
   }
 
   seedHistory(messages: Array<{ role: string; content: string | null }>) {

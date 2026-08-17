@@ -12,6 +12,8 @@ export const sw: MessageDict = {
   'voice.title': 'Sauti ya AccessPal',
   'voice.allowMic': 'Ruhusu maikrofoni ili uongeae kwa sauti.',
   'voice.enable': 'Anza kusikiliza',
+  'voice.disable': 'Acha kusikiliza',
+  'voice.disableHint': 'Maikrofoni imewashwa. Izime ukimaliza.',
   'voice.listening': 'AccessPal inasikiliza',
   'voice.ready': 'Inasikiliza · ongea kawaida',
   'voice.waitMic': 'Tunasubiri maikrofoni',
