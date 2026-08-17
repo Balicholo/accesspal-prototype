@@ -31,12 +31,16 @@ export type PhoneScreen =
 
 export type VoiceState =
   | 'idle'
+  | 'connecting'
+  | 'ready'
   | 'wake_detected'
   | 'listening'
+  | 'user_speaking'
   | 'processing'
   | 'executing_action'
   | 'speaking'
   | 'waiting_for_follow_up'
+  | 'disconnected'
   | 'error';
 
 export type AssistantPhase =

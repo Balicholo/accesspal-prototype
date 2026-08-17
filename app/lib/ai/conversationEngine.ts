@@ -23,6 +23,11 @@ import type {
 } from '../phone/types';
 import type { Contact } from '../types';
 
+/**
+ * FALLBACK ONLY. Not used when OpenAI Realtime or /api/chat is available.
+ * Keyword/NLU engine for offline demos and scripts/verify-intelligence.ts.
+ * Must never run in parallel with ChatGPT/Realtime.
+ */
 export class ConversationEngine {
   private context: DialogueContext = {
     language: 'en',

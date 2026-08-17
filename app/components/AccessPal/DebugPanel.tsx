@@ -18,7 +18,12 @@ export function DebugPanel({ state }: { state: PhoneState }) {
       <p>Speak: {String(state.isSpeaking)}</p>
       <p>Transcript: “{state.assistantHeard || '—'}”</p>
       <p>Language: {state.language}</p>
+      <p>Realtime: {state.debugRealtime || '—'}</p>
+      <p>Last event: {state.debugLastEvent || '—'}</p>
+      <p>Engine: {state.debugEngine || '—'}</p>
       <p>Intent: {state.debugIntent || '—'}</p>
+      <p>Tool args: {state.debugToolArgs || '—'}</p>
+      <p>Reply: “{state.assistantReply || '—'}”</p>
       <p>Phone: {state.screen}</p>
       <p>Action: {state.actionState || 'idle'}</p>
       <p>Demo: {state.activeDemo || 'false'}</p>

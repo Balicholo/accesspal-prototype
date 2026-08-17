@@ -35,7 +35,7 @@ function PitchExperience() {
       phone.dispatch({ type: 'CLEAR_LANGUAGE_BANNER' });
     }, 4200);
     return () => window.clearTimeout(timer);
-  }, [phone.dispatch, phone.state.languageBanner]);
+  }, [phone, phone.dispatch, phone.state.languageBanner]);
 
   useEffect(() => {
     const busy =
@@ -48,7 +48,10 @@ function PitchExperience() {
   const listening =
     phone.state.voiceState === 'listening' ||
     phone.state.voiceState === 'waiting_for_follow_up' ||
+    phone.state.voiceState === 'user_speaking' ||
+    phone.state.voiceState === 'ready' ||
     phone.state.assistantPhase === 'listening';
+  const connecting = phone.state.voiceState === 'connecting';
   const thinking = phone.state.voiceState === 'processing';
   const speaking = phone.state.voiceState === 'speaking';
   const executing = phone.state.voiceState === 'executing_action';
@@ -111,7 +114,9 @@ function PitchExperience() {
           active ? 'bg-[#e4b56a] shadow-[0_0_12px_#e4b56a]' : 'bg-white/25'
         }`}
       />
-      {listening
+      {connecting
+        ? t('overlay.waking')
+        : listening
         ? t('voice.listening')
         : thinking
           ? t('overlay.thinking')

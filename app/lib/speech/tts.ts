@@ -1,3 +1,8 @@
+/**
+ * FALLBACK ONLY. Browser speechSynthesis.
+ * Primary spoken output is OpenAI Realtime remote audio.
+ * useAccessPal must not call speak() while a Realtime session owns the speaker.
+ */
 import { logTransition } from '../controller/logger';
 import { getLanguage } from '../i18n/languages';
 import type { LanguageCode } from '../types';

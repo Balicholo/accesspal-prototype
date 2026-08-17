@@ -38,8 +38,9 @@ type Handlers = {
 };
 
 /**
- * Single-instance browser STT with an explicit session lifecycle.
- * Final transcripts stop recognition. The controller decides whether to restart.
+ * FALLBACK ONLY. Browser Web Speech API.
+ * Primary voice input is OpenAI Realtime (app/lib/voice/realtimeClient.ts).
+ * This provider is constructed only if Realtime cannot connect.
  */
 export class BrowserSpeechProvider implements SpeechProvider {
   readonly name = 'browser-webkit';

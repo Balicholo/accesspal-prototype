@@ -32,10 +32,10 @@ const SCENARIOS: DemoScenario[] = [
     id: 'send-money',
     titleKey: 'demo.sendMoney',
     turns: {
-      en: ['Hey Pal, send $20 to Wisdom.', 'Yes.', 'Allow.', 'Confirm.'],
-      sn: ['Hey Pal, ndoda kutumira $20 kuna Wisdom.', 'Hongu.', 'Bvuma.', 'Hongu.'],
-      nd: ['Hey Pal, ngifuna ukuthumela u-$20 kuWisdom.', 'Yebo.', 'Vumela.', 'Yebo.'],
-      sw: ['Hey Pal, nataka kutuma dola 20 kwa Wisdom.', 'Ndiyo.', 'Ruhusu.', 'Ndiyo.'],
+      en: ['Hey Pal, send $20 to Wisdom using EcoCash.', 'Yes.'],
+      sn: ['Hey Pal, ndoda kutumira $20 kuna Wisdom neEcoCash.', 'Hongu.'],
+      nd: ['Hey Pal, ngifuna ukuthumela u-$20 kuWisdom nge-EcoCash.', 'Yebo.'],
+      sw: ['Hey Pal, nataka kutuma dola 20 kwa Wisdom kwa EcoCash.', 'Ndiyo.'],
     },
   },
   {
@@ -99,6 +99,28 @@ const SCENARIOS: DemoScenario[] = [
     },
   },
   {
+    id: 'mixed-reach-joe',
+    titleKey: 'demo.mixed',
+    turns: {
+      en: [
+        "I've been trying to reach Joe all morning.",
+        "Yes, send him a WhatsApp message telling him I'll call tonight.",
+      ],
+      sn: [
+        'Ndiri kuedza kusvika kuna Joe mangwanani ese.',
+        'Ehe, tumira meseji yeWhatsApp kuti ndichamufonera manheru.',
+      ],
+      nd: [
+        'Bengizama ukufinyelela uJoe ekuseni lonke.',
+        'Yebo, mthumelele umlayezo weWhatsApp uthi ngizomshayela ebusuku.',
+      ],
+      sw: [
+        'Nimekuwa nikijaribu kumfikia Joe asubuhi yote.',
+        'Ndiyo, mtumie ujumbe wa WhatsApp kwamba nitampigia usiku.',
+      ],
+    },
+  },
+  {
     id: 'why-accesspal',
     titleKey: 'demo.why',
     turns: {
@@ -122,10 +144,10 @@ const SCENARIOS: DemoScenario[] = [
     id: 'multilingual',
     titleKey: 'demo.multilingual',
     turns: {
-      en: ['Send $20 to Wisdom.', 'Yes.', 'Allow.', 'Confirm.'],
-      sn: ['Ndoda kutumira $20 kuna Wisdom.', 'Hongu.', 'Bvuma.', 'Hongu.'],
-      nd: ['Ngifuna ukuthumela u-$20 kuWisdom.', 'Yebo.', 'Vumela.', 'Yebo.'],
-      sw: ['Nataka kutuma dola 20 kwa Wisdom.', 'Ndiyo.', 'Ruhusu.', 'Ndiyo.'],
+      en: ['Send $20 to Wisdom using EcoCash.', 'Yes.'],
+      sn: ['Ndoda kutumira $20 kuna Wisdom neEcoCash.', 'Hongu.'],
+      nd: ['Ngifuna ukuthumela u-$20 kuWisdom nge-EcoCash.', 'Yebo.'],
+      sw: ['Nataka kutuma dola 20 kwa Wisdom kwa EcoCash.', 'Ndiyo.'],
     },
   },
 ];

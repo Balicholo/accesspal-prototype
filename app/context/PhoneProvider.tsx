@@ -55,6 +55,10 @@ export interface PhoneState {
   actionState: string;
   activeDemo: string | null;
   debugIntent: string;
+  debugEngine: 'openai' | 'local' | 'realtime' | '';
+  debugToolArgs: string;
+  debugRealtime: string;
+  debugLastEvent: string;
 }
 
 const initialState = (): PhoneState => ({
@@ -87,6 +91,10 @@ const initialState = (): PhoneState => ({
   actionState: 'idle',
   activeDemo: null,
   debugIntent: '',
+  debugEngine: '',
+  debugToolArgs: '',
+  debugRealtime: '',
+  debugLastEvent: '',
 });
 
 function pushScreen(state: PhoneState, screen: PhoneScreen): PhoneState {
@@ -302,6 +310,10 @@ function reducer(state: PhoneState, action: PhoneAction | AssistantAction): Phon
         actionState: action.actionState ?? state.actionState,
         activeDemo: action.activeDemo === undefined ? state.activeDemo : action.activeDemo,
         debugIntent: action.debugIntent ?? state.debugIntent,
+        debugEngine: action.debugEngine ?? state.debugEngine,
+        debugToolArgs: action.debugToolArgs ?? state.debugToolArgs,
+        debugRealtime: action.debugRealtime ?? state.debugRealtime,
+        debugLastEvent: action.debugLastEvent ?? state.debugLastEvent,
       };
     case 'REFRESH_CHATS':
       return { ...state, chats: messageService.all() };
@@ -330,6 +342,10 @@ export type AssistantAction =
       actionState?: string;
       activeDemo?: string | null;
       debugIntent?: string;
+      debugEngine?: 'openai' | 'local' | 'realtime' | '';
+      debugToolArgs?: string;
+      debugRealtime?: string;
+      debugLastEvent?: string;
     }
   | { type: 'REFRESH_CHATS' };
 

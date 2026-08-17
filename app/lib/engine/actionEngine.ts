@@ -13,6 +13,11 @@ export interface ActionRunContext {
   onStatus: (label: string, actionState: string) => void;
 }
 
+/**
+ * Deterministic phone execution only.
+ * This class must not interpret natural language — it runs structured PhoneAction[]
+ * produced by planToolCall() from AI tool arguments.
+ */
 export class ActionEngine {
   constructor(private dispatch: (action: Dispatchable) => void) {}
 
