@@ -92,11 +92,9 @@ To add a phone action:
 
 Do not add a second keyword path that dispatches the same action.
 
-## Demo Mode
+## Try saying
 
-Guided scenarios in `app/data/demoScenarios.ts` send the same user lines through `ingest` → `/api/chat` (when a key is configured) → the same Action Engine. Realtime mic is muted during a demo so two voices do not talk at once.
-
-Without an API key, demos use the local fallback engine, still via Action Engine.
+The side list is a set of **example phrases**, not auto-run demos. Tap one to put it in the text box. Pal does not act until you speak it or press Send.
 
 ## Languages
 

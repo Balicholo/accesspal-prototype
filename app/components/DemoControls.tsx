@@ -1,23 +1,21 @@
 'use client';
 
-import { getDemoScenarios, type PlayableDemo } from '../data/demoScenarios';
+import { getStarterPrompts } from '../data/demoScenarios';
 import { t } from '../lib/i18n/t';
 import type { LanguageCode } from '../lib/types';
 
 export function DemoControls({
   language,
-  running,
-  onPlay,
+  onUsePrompt,
   onReset,
   layout = 'aside',
 }: {
   language: LanguageCode;
-  running: boolean;
-  onPlay: (scenario: PlayableDemo) => void;
+  onUsePrompt: (prompt: string) => void;
   onReset: () => void;
   layout?: 'aside' | 'page';
 }) {
-  const scenarios = getDemoScenarios(language);
+  const starters = getStarterPrompts(language);
   const page = layout === 'page';
 
   return (
@@ -41,19 +39,22 @@ export function DemoControls({
             : 'hide-scrollbar mt-3 max-h-[420px] space-y-1.5 overflow-y-auto'
         }
       >
-        {scenarios.map((scenario) => (
+        {starters.map((starter) => (
           <button
-            key={scenario.id}
+            key={starter.id}
             type="button"
-            disabled={running}
-            onClick={() => onPlay(scenario)}
+            onClick={() => onUsePrompt(starter.prompt)}
+            title={starter.prompt}
             className={
               page
-                ? 'block w-full rounded-2xl bg-white/5 px-4 py-3 text-left text-sm text-white/85 ring-1 ring-white/10 transition hover:bg-white/10 disabled:opacity-40'
-                : 'block w-full rounded-full px-3 py-1.5 text-left text-sm text-white/70 transition hover:bg-white/5 hover:text-white disabled:opacity-40'
+                ? 'block w-full rounded-2xl bg-white/5 px-4 py-3 text-left ring-1 ring-white/10 transition hover:bg-white/10'
+                : 'block w-full rounded-2xl px-3 py-2 text-left transition hover:bg-white/5'
             }
           >
-            {scenario.title}
+            <span className="block text-[10px] uppercase tracking-[0.16em] text-white/35">
+              {starter.title}
+            </span>
+            <span className="mt-0.5 block text-sm text-white/80">“{starter.prompt}”</span>
           </button>
         ))}
       </div>

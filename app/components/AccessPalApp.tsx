@@ -9,7 +9,6 @@ import { DebugPanel } from './AccessPal/DebugPanel';
 import { ErrorBoundary } from './ErrorBoundary';
 import { LanguageSelector } from './LanguageSelector';
 import { PhoneFrame } from './PhoneSimulator/PhoneFrame';
-import type { PlayableDemo } from '../data/demoScenarios';
 import type { LanguageCode } from '../lib/types';
 
 export function AccessPalApp() {
@@ -65,9 +64,16 @@ function PitchExperience() {
   const goToPhone = () => setMobilePane('device');
   const goToHub = () => setMobilePane('hub');
 
-  const playDemo = (scenario: PlayableDemo) => {
-    goToPhone();
-    void accessPal.playDemo(scenario);
+  const usePrompt = (prompt: string) => {
+    setText(prompt);
+    goToHub();
+    window.requestAnimationFrame(() => {
+      const inputs = document.querySelectorAll<HTMLInputElement>('[data-accesspal-text]');
+      const visible =
+        Array.from(inputs).find((el) => el.offsetParent !== null) ?? inputs[0];
+      visible?.focus();
+      visible?.select();
+    });
   };
 
   const sendText = () => {
@@ -166,6 +172,7 @@ function PitchExperience() {
       }}
     >
       <input
+        data-accesspal-text
         value={text}
         onChange={(event) => setText(event.target.value)}
         placeholder={t('voice.placeholder')}
@@ -217,8 +224,7 @@ function PitchExperience() {
 
             <DemoControls
               language={phone.state.language}
-              running={accessPal.demoRunning}
-              onPlay={playDemo}
+              onUsePrompt={usePrompt}
               onReset={resetDevice}
             />
           </div>
@@ -260,8 +266,7 @@ function PitchExperience() {
               <DemoControls
                 layout="page"
                 language={phone.state.language}
-                running={accessPal.demoRunning}
-                onPlay={playDemo}
+                onUsePrompt={usePrompt}
                 onReset={resetDevice}
               />
 

@@ -26,7 +26,6 @@ export function DebugPanel({ state }: { state: PhoneState }) {
       <p>Reply: “{state.assistantReply || '—'}”</p>
       <p>Phone: {state.screen}</p>
       <p>Action: {state.actionState || 'idle'}</p>
-      <p>Demo: {state.activeDemo || 'false'}</p>
     </aside>
   );
 }

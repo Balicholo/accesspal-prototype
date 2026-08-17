@@ -1,163 +1,137 @@
 import type { LanguageCode } from '../lib/types';
 import { t } from '../lib/i18n/t';
 
-export interface DemoScenario {
+export interface StarterPrompt {
   id: string;
   titleKey: string;
-  turns: Record<LanguageCode, string[]>;
+  prompt: Record<LanguageCode, string>;
 }
 
-const SCENARIOS: DemoScenario[] = [
+const STARTERS: StarterPrompt[] = [
   {
     id: 'open-whatsapp',
     titleKey: 'demo.openWhatsapp',
-    turns: {
-      en: ['Hey Pal, open WhatsApp.'],
-      sn: ['Hey Pal, vhura WhatsApp.'],
-      nd: ['Hey Pal, vula iWhatsApp.'],
-      sw: ['Hey Pal, fungua WhatsApp.'],
+    prompt: {
+      en: 'Hey Pal, open WhatsApp.',
+      sn: 'Hey Pal, vhura WhatsApp.',
+      nd: 'Hey Pal, vula iWhatsApp.',
+      sw: 'Hey Pal, fungua WhatsApp.',
     },
   },
   {
     id: 'message-joe',
     titleKey: 'demo.messageJoe',
-    turns: {
-      en: ['Send Joe a message.', "Tell him I'll call him later.", 'Yes.'],
-      sn: ['Tumira meseji kuna Joe.', 'Muudze kuti ndichamufonera gare gare.', 'Hongu.'],
-      nd: ['Thumela umlayezo kuJoe.', 'Mtshele ukuthi ngizomshayela kamuva.', 'Yebo.'],
-      sw: ['Mtumie Joe ujumbe.', 'Mwambie nitampigia baadaye.', 'Ndiyo.'],
+    prompt: {
+      en: "Send Joe a WhatsApp message saying I'll call him later.",
+      sn: 'Tumira meseji yeWhatsApp kuna Joe kuti ndichamufonera gare gare.',
+      nd: 'Thumela umlayezo we-WhatsApp kuJoe uthi ngizomshayela kamuva.',
+      sw: 'Mtumie Joe ujumbe wa WhatsApp kwamba nitampigia baadaye.',
     },
   },
   {
     id: 'send-money',
     titleKey: 'demo.sendMoney',
-    turns: {
-      en: ['Hey Pal, send $20 to Wisdom using EcoCash.', 'Yes.'],
-      sn: ['Hey Pal, ndoda kutumira $20 kuna Wisdom neEcoCash.', 'Hongu.'],
-      nd: ['Hey Pal, ngifuna ukuthumela u-$20 kuWisdom nge-EcoCash.', 'Yebo.'],
-      sw: ['Hey Pal, nataka kutuma dola 20 kwa Wisdom kwa EcoCash.', 'Ndiyo.'],
+    prompt: {
+      en: 'Hey Pal, send $20 to Wisdom using EcoCash.',
+      sn: 'Hey Pal, ndoda kutumira $20 kuna Wisdom neEcoCash.',
+      nd: 'Hey Pal, ngifuna ukuthumela u-$20 kuWisdom nge-EcoCash.',
+      sw: 'Hey Pal, nataka kutuma dola 20 kwa Wisdom kwa EcoCash.',
     },
   },
   {
     id: 'buy-airtime',
     titleKey: 'demo.airtime',
-    turns: {
-      en: ['I need airtime.', 'Five dollars.', 'Yes.'],
-      sn: ['Ndoda kutenga airtime.', 'Madhora mashanu.', 'Hongu.'],
-      nd: ['Ngifuna ukuthenga i-airtime.', 'Amadola amahlanu.', 'Yebo.'],
-      sw: ['Nataka kununua airtime.', 'Dola tano.', 'Ndiyo.'],
+    prompt: {
+      en: 'Buy $5 airtime.',
+      sn: 'Tenga airtime yemadhora mashanu.',
+      nd: 'Thenga i-airtime yamadola amahlanu.',
+      sw: 'Nunua airtime ya dola tano.',
     },
   },
   {
     id: 'call-tendai',
     titleKey: 'demo.call',
-    turns: {
-      en: ['Call Tendai.', 'Yes.'],
-      sn: ['Fonera Tendai.', 'Hongu.'],
-      nd: ['Fowunela uTendai.', 'Yebo.'],
-      sw: ['Mpigie Tendai simu.', 'Ndiyo.'],
+    prompt: {
+      en: 'Call Tendai.',
+      sn: 'Fonera Tendai.',
+      nd: 'Fowunela uTendai.',
+      sw: 'Mpigie Tendai simu.',
     },
   },
   {
     id: 'check-balance',
     titleKey: 'demo.balance',
-    turns: {
-      en: ['What is my balance?'],
-      sn: ['Mari yangu yakawanda sei?'],
-      nd: ['Ibhalansi yami ingakanani?'],
-      sw: ['Salio langu ni kiasi gani?'],
+    prompt: {
+      en: 'What is my EcoCash balance?',
+      sn: 'Mari yangu yeEcoCash yakawanda sei?',
+      nd: 'Ibhalansi yami ye-EcoCash ingakanani?',
+      sw: 'Salio langu la EcoCash ni kiasi gani?',
     },
   },
   {
     id: 'check-time',
     titleKey: 'demo.time',
-    turns: {
-      en: ['What time is it?'],
-      sn: ['Nguvai?'],
-      nd: ['Kungasikhathi bani?'],
-      sw: ['Ni saa ngapi?'],
+    prompt: {
+      en: 'What time is it?',
+      sn: 'Nguvai?',
+      nd: 'Kungasikhathi bani?',
+      sw: 'Ni saa ngapi?',
     },
   },
   {
     id: 'set-alarm',
     titleKey: 'demo.alarm',
-    turns: {
-      en: ['Set an alarm for 6 AM.'],
-      sn: ['Gadzira alarm ye6 AM.'],
-      nd: ['Misa i-alamu ngo-6 AM.'],
-      sw: ['Weka kengele saa 6 asubuhi.'],
+    prompt: {
+      en: 'Set an alarm for 6 AM.',
+      sn: 'Gadzira alarm ye6 AM.',
+      nd: 'Misa i-alamu ngo-6 AM.',
+      sw: 'Weka kengele saa 6 asubuhi.',
     },
   },
   {
     id: 'conversation',
     titleKey: 'demo.conversation',
-    turns: {
-      en: ['This platform is really beautiful.', 'What makes you different from Siri?'],
-      sn: ['Iyi platform yakanaka chaizvo.', 'Chii chinokusiyanisa naSiri?'],
-      nd: ['Le platform yinhle impela.', 'Yini ekuhlukanisa noSiri?'],
-      sw: ['Jukwaa hili ni zuri sana.', 'Nini kinakutofautisha na Siri?'],
+    prompt: {
+      en: 'This platform is really beautiful.',
+      sn: 'Iyi platform yakanaka chaizvo.',
+      nd: 'Le platform yinhle impela.',
+      sw: 'Jukwaa hili ni zuri sana.',
     },
   },
   {
     id: 'mixed-reach-joe',
     titleKey: 'demo.mixed',
-    turns: {
-      en: [
-        "I've been trying to reach Joe all morning.",
-        "Yes, send him a WhatsApp message telling him I'll call tonight.",
-      ],
-      sn: [
-        'Ndiri kuedza kusvika kuna Joe mangwanani ese.',
-        'Ehe, tumira meseji yeWhatsApp kuti ndichamufonera manheru.',
-      ],
-      nd: [
-        'Bengizama ukufinyelela uJoe ekuseni lonke.',
-        'Yebo, mthumelele umlayezo weWhatsApp uthi ngizomshayela ebusuku.',
-      ],
-      sw: [
-        'Nimekuwa nikijaribu kumfikia Joe asubuhi yote.',
-        'Ndiyo, mtumie ujumbe wa WhatsApp kwamba nitampigia usiku.',
-      ],
-    },
-  },
-  {
-    id: 'why-accesspal',
-    titleKey: 'demo.why',
-    turns: {
-      en: ['Why do I need AccessPal?'],
-      sn: ['Sei ndichida AccessPal?'],
-      nd: ['Kungani ngidinga i-AccessPal?'],
-      sw: ['Kwa nini nahitaji AccessPal?'],
+    prompt: {
+      en: "I've had a long day. Send Joe a WhatsApp telling him I'll call tonight.",
+      sn: 'Ndanhaka zuva. Tumira Joe meseji yeWhatsApp kuti ndichamufonera manheru.',
+      nd: 'Usuku lube lude. Thumela uJoe umlayezo we-WhatsApp uthi ngizomshayela ebusuku.',
+      sw: 'Nimekuwa na siku ndefu. Mtumie Joe WhatsApp kwamba nitampigia usiku.',
     },
   },
   {
     id: 'what-can-you-do',
     titleKey: 'demo.help',
-    turns: {
-      en: ['Hey Pal, what can you do?'],
-      sn: ['Hey Pal, unogona chii?'],
-      nd: ['Hey Pal, yini ongayisiza?'],
-      sw: ['Hey Pal, unaweza kufanya nini?'],
-    },
-  },
-  {
-    id: 'multilingual',
-    titleKey: 'demo.multilingual',
-    turns: {
-      en: ['Send $20 to Wisdom using EcoCash.', 'Yes.'],
-      sn: ['Ndoda kutumira $20 kuna Wisdom neEcoCash.', 'Hongu.'],
-      nd: ['Ngifuna ukuthumela u-$20 kuWisdom nge-EcoCash.', 'Yebo.'],
-      sw: ['Nataka kutuma dola 20 kwa Wisdom kwa EcoCash.', 'Ndiyo.'],
+    prompt: {
+      en: 'Hey Pal, what can you do?',
+      sn: 'Hey Pal, unogona chii?',
+      nd: 'Hey Pal, yini ongayisiza?',
+      sw: 'Hey Pal, unaweza kufanya nini?',
     },
   },
 ];
 
-export function getDemoScenarios(language: LanguageCode) {
-  return SCENARIOS.map((scenario) => ({
-    id: scenario.id,
-    title: t(scenario.titleKey, language),
-    turns: scenario.turns[language] ?? scenario.turns.en,
+export function getStarterPrompts(language: LanguageCode) {
+  return STARTERS.map((starter) => ({
+    id: starter.id,
+    title: t(starter.titleKey, language),
+    prompt: starter.prompt[language] ?? starter.prompt.en,
   }));
 }
 
-export type PlayableDemo = ReturnType<typeof getDemoScenarios>[number];
+export function getDemoScenarios(language: LanguageCode) {
+  return getStarterPrompts(language).map((starter) => ({
+    id: starter.id,
+    title: starter.title,
+    turns: [starter.prompt],
+  }));
+}

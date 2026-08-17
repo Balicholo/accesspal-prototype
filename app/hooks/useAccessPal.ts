@@ -3,14 +3,13 @@
 /**
  * Single AccessPal session controller.
  * Voice: OpenAI Realtime (primary) or browser STT (fallback only).
- * Text/demo: /api/chat → planToolCall → ActionEngine, or local ConversationEngine if OpenAI is unavailable.
+ * Text: /api/chat → planToolCall → ActionEngine, or local ConversationEngine if OpenAI is unavailable.
  */
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { usePhone } from '../context/PhoneProvider';
 import {
   ConversationEngine,
-  autoAdvanceUtterance,
   type EngineTurnResult,
 } from '../lib/ai/conversationEngine';
 import { playActivationChime } from '../lib/assistant/audio';
@@ -32,14 +31,13 @@ import { RealtimeVoiceClient, isRealtimeSupported } from '../lib/voice/realtimeC
 import { normalizeText } from '../lib/format';
 import { isCancelMeaning, isConfirmMeaning } from '../lib/tasks/dialogueActs';
 import type { AssistantPhase, EngineTurn, VoiceState } from '../lib/phone/types';
-import type { PlayableDemo } from '../data/demoScenarios';
 
 const FOLLOW_UP_MS = 8000;
 const TASK_FOLLOW_UP_MS = 20000;
 const PROCESS_TIMEOUT_MS = 8000;
 const OPENAI_TIMEOUT_MS = 50000;
 
-type IngestSource = 'voice' | 'text' | 'demo';
+type IngestSource = 'voice' | 'text';
 
 export function useAccessPal() {
   const phone = usePhone();
@@ -55,7 +53,6 @@ export function useAccessPal() {
   const speakingRef = useRef(false);
   const followUpRef = useRef(false);
   const handsFreeRef = useRef(false);
-  const demoRef = useRef(false);
   const lastSpokenRef = useRef('');
   const lastSpokenAtRef = useRef(0);
   const lastWakeRef = useRef(0);
@@ -69,7 +66,6 @@ export function useAccessPal() {
       : Boolean(navigator.mediaDevices?.getUserMedia) || isSpeechRecognitionSupported()
   );
   const [handsFree, setHandsFree] = useState(false);
-  const [demoRunning, setDemoRunning] = useState(false);
   const [fallbackOpen, setFallbackOpen] = useState(false);
   const [micError, setMicError] = useState('');
 
@@ -244,7 +240,7 @@ export function useAccessPal() {
         return;
       }
       const listener = listenerRef.current;
-      if (!listener || !handsFreeRef.current || demoRef.current) return;
+      if (!listener || !handsFreeRef.current) return;
       const language = engineRef.current.getContext().language;
       const started = isMobileVoiceClient()
         ? listener.resumeSession(mode, language, { silenceMs })
@@ -272,7 +268,7 @@ export function useAccessPal() {
       currentAction: '',
       actionState: 'idle',
     });
-    if (handsFreeRef.current && !demoRef.current) {
+    if (handsFreeRef.current) {
       startMic('wake');
     }
   }, [clearSleep, patchSession, startMic]);
@@ -282,7 +278,7 @@ export function useAccessPal() {
       followUpRef.current = true;
       clearSleep();
       sleepTimerRef.current = window.setTimeout(() => {
-        if (processingRef.current || speakingRef.current || demoRef.current) return;
+        if (processingRef.current || speakingRef.current) return;
         logTransition('VOICE', 'follow-up timed out');
         enterIdle();
       }, ms);
@@ -340,7 +336,7 @@ export function useAccessPal() {
         isListening: false,
         reply: line,
       });
-      const realtimeOwnsAudio = voicePathRef.current === 'realtime' && !demoRef.current;
+      const realtimeOwnsAudio = voicePathRef.current === 'realtime';
       if (realtimeOwnsAudio) {
         speakingRef.current = false;
         if (turnId !== turnIdRef.current) return;
@@ -459,7 +455,7 @@ export function useAccessPal() {
       const sessionOpen = followUpRef.current || listeningMode === 'command';
       const requireWake =
         options.requireWake ??
-        (options.source === 'voice' && !sessionOpen && listeningMode === 'wake' && !demoRef.current);
+        (options.source === 'voice' && !sessionOpen && listeningMode === 'wake');
 
       if (requireWake && !wake.addressed) {
         return;
@@ -572,7 +568,6 @@ export function useAccessPal() {
               result.expectFollowUp || handsFreeRef.current || options.source === 'text';
             followUpRef.current = expectFollowUp;
             processingRef.current = false;
-            if (options.source === 'demo') return;
             if (expectFollowUp) {
               armFollowUp(result.executedTools.length ? FOLLOW_UP_MS : TASK_FOLLOW_UP_MS);
             } else {
@@ -610,22 +605,6 @@ export function useAccessPal() {
         await runTurn(result, turnId);
 
         if (turnId !== turnIdRef.current || cancelledRef.current) return;
-
-        if (options.source === 'demo') {
-          let current = result;
-          while (true) {
-            const next = autoAdvanceUtterance(engineRef.current.getContext().task);
-            if (!next) break;
-            await delay(current.task?.step === 'permission' ? 900 : 450);
-            if (turnId !== turnIdRef.current || cancelledRef.current) return;
-            logTransition('DEMO', `auto-advance "${next}"`);
-            current = engineRef.current.process(next) as EngineTurnResult;
-            await runTurn(current, turnId);
-          }
-          followUpRef.current = Boolean(engineRef.current.getContext().task || current.expectFollowUp);
-          processingRef.current = false;
-          return;
-        }
 
         const expectFollowUp = Boolean(result.expectFollowUp || result.task);
         followUpRef.current = expectFollowUp;
@@ -922,7 +901,7 @@ export function useAccessPal() {
   const submitText = useCallback(
     async (text: string) => {
       followUpRef.current = true;
-      if (voicePathRef.current === 'realtime' && realtimeRef.current?.isConnected() && !demoRef.current) {
+      if (voicePathRef.current === 'realtime' && realtimeRef.current?.isConnected()) {
         const spoken = detectSpokenLanguage(text, languageRef.current);
         if (spoken.switched) {
           languageRef.current = spoken.language;
@@ -964,7 +943,6 @@ export function useAccessPal() {
     turnIdRef.current += 1;
     processingRef.current = false;
     speakingRef.current = false;
-    demoRef.current = false;
     stopSpeaking();
     stopMic();
     realtimeRef.current?.cancelResponse();
@@ -992,56 +970,10 @@ export function useAccessPal() {
     }
   }, [clearSleep, patchSession, phone, startMic, stopMic]);
 
-  const playDemo = useCallback(
-    async (scenario: PlayableDemo) => {
-      abortAll();
-      cancelledRef.current = false;
-      demoRef.current = true;
-      realtimeRef.current?.setMicEnabled(false);
-      realtimeRef.current?.cancelResponse();
-      setDemoRunning(true);
-      engineRef.current.reset();
-      openAISession.reset();
-      phone.dispatch({ type: 'RESET_DEVICE' });
-      patchSession({ activeDemo: scenario.id, phase: 'dormant' });
-      logTransition('DEMO', `started ${scenario.id}`);
-      await delay(280);
-
-      try {
-        for (const turn of scenario.turns) {
-          if (cancelledRef.current) break;
-          if (shouldSkipFiller(turn, engineRef.current.getContext().task)) continue;
-          followUpRef.current = true;
-          await ingest(turn, { source: 'demo', requireWake: false });
-          await delay(350);
-        }
-      } catch (error) {
-        logTransition('DEMO', 'failed', error);
-        recover("I couldn't complete that action. Would you like me to try again?");
-      } finally {
-        demoRef.current = false;
-        setDemoRunning(false);
-        if (voicePathRef.current === 'realtime') {
-          realtimeRef.current?.setMicEnabled(true);
-        }
-        patchSession({ activeDemo: null });
-        logTransition('DEMO', 'finished');
-        await delay(2800);
-        if (!cancelledRef.current) {
-          phone.dispatch({ type: 'GO_HOME' });
-          enterIdle();
-        }
-      }
-    },
-    [abortAll, enterIdle, ingest, patchSession, phone, recover]
-  );
-
   const resetDevice = useCallback(() => {
     abortAll();
     engineRef.current.reset();
     phone.dispatch({ type: 'RESET_DEVICE' });
-    demoRef.current = false;
-    setDemoRunning(false);
     enterIdle();
   }, [abortAll, enterIdle, phone]);
 
@@ -1049,24 +981,16 @@ export function useAccessPal() {
     micReady,
     micSupported,
     handsFree,
-    demoRunning,
     fallbackOpen,
     micError,
     setFallbackOpen,
     enableHandsFree,
     submitText,
     retryLast,
-    playDemo,
     resetDevice,
     abortAll,
     handleUtterance: (text: string) => submitText(text),
   };
-}
-
-function shouldSkipFiller(text: string, task: EngineTurn['task']) {
-  if (task) return false;
-  const act = extractFeatures(text).act;
-  return act === 'confirm' || act === 'allow';
 }
 
 function isSelfEcho(transcript: string, lastSpoken: string, spokenAt = 0) {
